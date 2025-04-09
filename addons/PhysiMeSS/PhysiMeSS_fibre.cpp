@@ -112,82 +112,63 @@ void PhysiMeSS_Fibre::check_out_of_bounds(std::vector<double>& position)
 	double Xmax = BioFVM::get_default_microenvironment()->mesh.bounding_box[3]; 
 	double Ymax = BioFVM::get_default_microenvironment()->mesh.bounding_box[4]; 
 	double Zmax = BioFVM::get_default_microenvironment()->mesh.bounding_box[5]; 
-	
-	if( default_microenvironment_options.simulate_2D == true )
-	{
-		Zmin = 0.0; 
-		Zmax = 0.0; 
-	}
     
     // start and end points of a fibre are calculated from fibre center
     double xs = position[0] - this->mLength * this->state.orientation[0];
     double xe = position[0] + this->mLength * this->state.orientation[0];
     double ys = position[1] - this->mLength * this->state.orientation[1];
     double ye = position[1] + this->mLength * this->state.orientation[1];
-    double zs = 0.0;
-    double ze = 0.0;
-    if (default_microenvironment_options.simulate_2D) {
-        /*std::cout << " fibre endpoints in 2D are " << xs << " " << ys <<
-                        " and " << xe << " " << ye << std::endl; */
-    }
-    else if (!default_microenvironment_options.simulate_2D) {
-        zs = position[2] - this->mLength * this->state.orientation[2];
-        ze = position[2] + this->mLength * this->state.orientation[2];
-        /*std::cout << " fibre endpoints in 3D are " << xs << " " << ys << " " << zs <<
-                        " and " << xe << " " << ye << " " << ze << std::endl; */
-    }
-
+    double zs = position[2] - this->mLength * this->state.orientation[2];
+    double ze = position[2] + this->mLength * this->state.orientation[2];
+   
     /* check whether a fibre end point leaves the domain and if so initialise fibre again
                 assume user placed the centre of fibre within the domain so reinitialise orientation,
                 break after 10 failures
-                It needs re-writing at some stage to handle the 3D case properly */
-
+     */
+    
+    if (default_microenvironment_options.simulate_2D) {
+        zs = 0;
+        ze = 0;
+    }
+    // Anisotropic fibres have similar orientation, therefore if one of the endpoint is out of bound, no fibres will be set at this position
     if (this->custom_data["anisotropic_fibres"]) {
         if (xs < Xmin || xe > Xmax || xe < Xmin || xs > Xmax ||
-            ys < Ymin || ye > Ymax || ye < Ymin || ys > Ymax) {
+            ys < Ymin || ye > Ymax || ye < Ymin || ys > Ymax ||
+            zs < Zmin || ze > Zmax || ze < Zmin || zs > Zmax ) {
             fail_count = 10;
         }
+        
     }
+    //Otherwise, if fibre orientation is not constrained an other random orientation is set if out of bound
     else{
-        if (default_microenvironment_options.simulate_2D) {
-            while (fail_count < 10) {
-                if (xs < Xmin || xe > Xmax || xe < Xmin || xs > Xmax ||
-                    ys < Ymin || ye > Ymax || ye < Ymin || ys > Ymax) {
+        while (fail_count < 10) {
+            if (xs < Xmin || xe > Xmax || xe < Xmin || xs > Xmax ||
+                ys < Ymin || ye > Ymax || ye < Ymin || ys > Ymax ||
+                zs < Zmin || ze > Zmax || ze < Zmin || zs > Zmax ) {
                     fail_count++;
-                    this->state.orientation = PhysiCell::UniformOnUnitCircle();
-                    xs = position[0] - mLength * this->state.orientation[0];
-                    xe = position[0] + mLength * this->state.orientation[0];
-                    ys = position[1] - mLength * this->state.orientation[1];
-                    ye = position[1] + mLength * this->state.orientation[1];
-                }
-                else {
-                    break;
-                }
-            }
-        }
 
-        if (!default_microenvironment_options.simulate_2D) {
-            while (fail_count < 10) {
-                if (xs < Xmin || xe > Xmax || xe < Xmin || xs > Xmax ||
-                    ys < Ymin || ye > Ymax || ye < Ymin || ys > Ymax ||
-                    zs < Zmin || ze > Zmax || ze < Xmin || zs > Xmax) {
-                    fail_count++;
                     this->state.orientation = PhysiCell::UniformOnUnitSphere();
+                    
                     xs = position[0] - mLength * this->state.orientation[0];
                     xe = position[0] + mLength * this->state.orientation[0];
                     ys = position[1] - mLength * this->state.orientation[1];
                     ye = position[1] + mLength * this->state.orientation[1];
                     zs = position[2] - mLength * this->state.orientation[2];
                     ze = position[2] + mLength * this->state.orientation[2];
-                }
-                else {
-                    break;
-                }
+
+                    if (default_microenvironment_options.simulate_2D) {
+                        this->state.orientation[2] = 0;
+                        zs = 0;
+                        ze = 0;
+                        
+                    }
+            }
+            else {
+                break;
             }
         }
     }
 }
-
 
 void PhysiMeSS_Fibre::add_potentials_from_cell(PhysiMeSS_Cell* cell) 
 {
