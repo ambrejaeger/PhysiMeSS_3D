@@ -517,58 +517,49 @@ void PhysiMeSS_Fibre::deregister_fibre_voxels()
 }
 
 
+/*
+This function modifies computes the point on the central axis of the fibre closest to the argument point
+*/
 std::vector<double> PhysiMeSS_Fibre::nearest_point_on_fibre(std::vector<double> point, std::vector<double> &displacement) 
 {
-
     // don't bother if the "fibre_agent" is not a fibre
     if (!isFibre(this)) { return displacement; }
 
     double fibre_length = 2 * this->mLength;
     // vector pointing from one endpoint of "fibre_agent" to "point"
     std::vector<double> fibre_to_agent(3, 0.0);
-    // |fibre_to_agent| squared
-    double fibre_to_agent_length_squared = 0;
     // scalar product fibre_to_agent * fibre_vector
-    double fibre_to_agent_dot_fibre_vector = 0;
-
+    double fibre_to_agent_dot_endpoint_to_center = 0;
+    std::vector<double> endpoint(3,0.0);
     double distance = 0;
-    for (unsigned int i = 0; i < 3; i++) {
-        fibre_to_agent[i] = point[i] - (this->position[i]
-                                        - this->mLength * this->state.orientation[i]);
-        fibre_to_agent_length_squared += fibre_to_agent[i] * fibre_to_agent[i];
-        fibre_to_agent_dot_fibre_vector += fibre_to_agent[i] * fibre_length * this->state.orientation[i];
-    }
 
-    // "point" is closest to the selected endpoint of "fibre_agent"
-    if (fibre_to_agent_dot_fibre_vector < 0.) {
+    for (unsigned int i = 0; i < 3; i++) {
+        endpoint[i] = this->position[i] - this->mLength * this->state.orientation[i];
+        fibre_to_agent[i] = point[i] - endpoint[i];
+        fibre_to_agent_dot_endpoint_to_center += fibre_to_agent[i] * 2 * (position[i] - endpoint[i]);//Magnitude of the vector fiber agent projected on the vector orientation of the fiber
+    }
+    // First 2 cases: one of the endpoint is the closest point on the fibre from the point
+    // "point" is closest to the selected endpoint of this fibre
+    if (fibre_to_agent_dot_endpoint_to_center < 0.) {
         for (int i = 0; i < 3; i++) {
             displacement[i] = fibre_to_agent[i];
         }
-        //std::cout << "The point is closest to the start of the fibre" << std::endl;
-        //std::cout << " Displacement: " << displacement << std::endl;
+
     }
-        // “point” is closest to the other endpoint of “fibre_agent”
-    else if (fibre_to_agent_dot_fibre_vector > fibre_length * fibre_length) {
+        // “point” is closest to the other endpoint of this fibre
+    else if (fibre_to_agent_dot_endpoint_to_center > fibre_length * fibre_length) {
         for (unsigned int i = 0; i < 3; i++) {
             displacement[i] = point[i] - (this->position[i]
                                             + this->mLength * this->state.orientation[i]);
         }
-        //std::cout << "The point is closest to the end of the fibre" << std::endl;
-        //std::cout << " Displacement: " << displacement << std::endl;
     }
-        // “point” is closest to a point along “fibre_agent”
+       
+       // Final case: “point” is closest to a point along this fibre
     else {
-        double fibre_to_agent_length_cos_alpha_squared =
-                fibre_to_agent_dot_fibre_vector * fibre_to_agent_dot_fibre_vector /
-                (fibre_length * fibre_length);
-        double l = sqrt(fibre_to_agent_length_cos_alpha_squared);
         for (unsigned int i = 0; i < 3; i++) {
-            displacement[i] = fibre_to_agent[i] - l * this->state.orientation[i];
+            displacement[i] = fibre_to_agent[i] - (position[i] - endpoint[i])/mLength * fibre_to_agent_dot_endpoint_to_center/fibre_length;
         }
-        //std::cout << "The point is closest to a point along the fibre" << std::endl;
-        //std::cout << " Displacement: " << displacement << std::endl;
     }
-
     // the function returns the displacement vector
     return displacement;
 }
