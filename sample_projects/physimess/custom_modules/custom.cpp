@@ -177,6 +177,8 @@ void setup_tissue( void )
 	double Ymax = microenvironment.mesh.bounding_box[4]; 
 	double Zmax = microenvironment.mesh.bounding_box[5]; 
 	
+	std::cout << " x min :" << microenvironment.mesh.bounding_box[0] << " y min :" << microenvironment.mesh.bounding_box[1] << " z min :" << microenvironment.mesh.bounding_box[2] << std::endl;
+	std::cout << " x max :" << microenvironment.mesh.bounding_box[3] << " y max :" << microenvironment.mesh.bounding_box[4] << " z max :" << microenvironment.mesh.bounding_box[5] << std::endl;
 	if( default_microenvironment_options.simulate_2D == true )
 	{
 		Zmin = 0.0; 
@@ -190,68 +192,57 @@ void setup_tissue( void )
     load_cells_from_pugixml();
 
     // new fibre related parameters and bools
-    bool isFibreFromFile = false;
-    
-    for( int i=0; i < (*all_cells).size(); i++ ){
-
-        if (isFibre((*all_cells)[i]))
-        {
-            /* fibre positions are given by csv
-               assign fibre orientation and test whether out of bounds */
-            isFibreFromFile = true;
+    bool isFibreFromFile = read_isFibreFromFile_status();
+	std::cout << "Fibre from file: " << isFibreFromFile << std::endl;
+	for( int i=0; i < (*all_cells).size(); i++ ) {
+        if (isFibre((*all_cells)[i])) {
+			if (isFibreFromFile) {
+				std::cerr << "Error: You have specified fibres position in your .csv to initialize agents position.\n"
+				<< "If you wish to initialize fibre position from your .csv file modify IsFibreFromFile\n"
+				<< "and set enable to true in your initial conditions in your xml setting file.\n"
+				<< "Otherwise please choose a .csv position file without fibre data." << std::endl;
+	  			exit(EXIT_FAILURE);
+  			}
+			// Original fiber orientation assignment code
 			static_cast<PhysiMeSS_Fibre*>((*all_cells)[i])->assign_fibre_orientation();
+		}
+    }
+
+    /* Fibres agents are not added from the file but are created at random 
+	given a relative volume index between 0 and 1 */
+
+    if(!isFibreFromFile) {
+		
+		int my_type = read_FibreID(); 
+		Cell_Definition* pCD = find_cell_definition( my_type );
+		if( pCD != NULL )
+		{
 			
-        } 
-    }
+			double relative_fibres_volume = read_RelativeFibreVolume();
+			double fibre_volume = pCD->custom_data["fibre_length"]*pCD->custom_data["fibre_radius"]*pCD->custom_data["fibre_radius"]*3.14;
+			double microenvironment_volume = Xrange*Yrange*Zrange;
+			int fibres_count = 0;
+			while (fibres_count*fibre_volume/microenvironment_volume < relative_fibres_volume ) {
+				Cell* pC;
+				std::vector<double> position = {0, 0, 0};
 
-    /* agents have not been added from the file but do want them
-       create some of each agent type */
+				position[0] = Xmin + UniformRandom() * Xrange;
+				position[1] = Ymin + UniformRandom() * Yrange;
+				position[2] = Zmin + UniformRandom() * Zrange;
 
-    if(!isFibreFromFile){
-        Cell* pC;
-        std::vector<double> position = {0, 0, 0};
+				pC = create_cell(*pCD);
 
-        for( int k=0; k < cell_definitions_by_index.size() ; k++ ) {
+				static_cast<PhysiMeSS_Fibre*>(pC)->assign_fibre_orientation();
+				static_cast<PhysiMeSS_Fibre*>(pC)->check_out_of_bounds(position);
 
-            Cell_Definition *pCD = cell_definitions_by_index[k];
-            // std::cout << "Placing cells of type " << pCD->name << " ... " << std::endl;
-            
-            if (!isFibre(pCD))
-            {
-                for (int n = 0; n < parameters.ints("number_of_cells"); n++) {
-
-                    position[0] = Xmin + UniformRandom() * Xrange;
-                    position[1] = Ymin + UniformRandom() * Yrange;
-                    position[2] = Zmin + UniformRandom() * Zrange;
-
-                    pC = create_cell(*pCD);
-                                        
-                    pC->assign_position(position);
-                }
-            } 
-            
-            else 
-            {
-                for ( int nf = 0 ; nf < parameters.ints("number_of_fibres") ; nf++ ) {
-
-                    position[0] = Xmin + UniformRandom() * Xrange;
-                    position[1] = Ymin + UniformRandom() * Yrange;
-                    position[2] = Zmin + UniformRandom() * Zrange;
-
-                    pC = create_cell(*pCD);
-
-                    static_cast<PhysiMeSS_Fibre*>(pC)->assign_fibre_orientation();
-                    static_cast<PhysiMeSS_Fibre*>(pC)->check_out_of_bounds(position);
-
-                    pC->assign_position(position);
-                }
-            }
-        }
-    }
-
-    remove_physimess_out_of_bounds_fibres();
-    
-    // std::cout << std::endl;
+				pC->assign_position(position);
+				fibres_count++;
+			}
+			
+		}
+   
+	}
+	remove_physimess_out_of_bounds_fibres();
 }
 
 std::vector<std::string> paint_by_cell_pressure( Cell* pCell ){
@@ -348,3 +339,44 @@ void PhysiMeSS_Cell_Custom_Degrade::degrade_fibre(PhysiMeSS_Fibre* pFibre)
         }
     // }
 }
+
+
+bool read_isFibreFromFile_status(pugi::xml_node config_root) {
+	pugi::xml_node node;
+	// Assign values to node and enable_vtk_saves inside a function
+	 node = xml_find_node(config_root, "initial_conditions");
+	 node = xml_find_node(node, "fibres_from_file");
+	bool isFibreFromFile = xml_get_bool_value(node, "enable");
+	return isFibreFromFile;
+ }
+ 
+ bool read_isFibreFromFile_status(void) {
+	return read_isFibreFromFile_status(physicell_config_root);
+ }
+
+
+int read_FibreID(pugi::xml_node config_root) {
+	pugi::xml_node node;
+	// Assign values to node and enable_vtk_saves inside a function
+	 node = xml_find_node(config_root, "initial_conditions");
+	 node = xml_find_node(node, "fibres_from_file");
+	int FibreID = xml_get_int_value(node, "ID");
+	return FibreID;
+ }
+ 
+ int read_FibreID(void) {
+	return read_FibreID(physicell_config_root);
+ }
+
+ double read_RelativeFibreVolume(pugi::xml_node config_root) {
+	pugi::xml_node node;
+	// Assign values to node and enable_vtk_saves inside a function
+	 node = xml_find_node(config_root, "initial_conditions");
+	 node = xml_find_node(node, "fibres_from_file");
+	double relative_volume = xml_get_double_value(node, "relative_fibre_volume");
+	return relative_volume;
+ }
+ 
+ double read_RelativeFibreVolume(void) {
+	return read_RelativeFibreVolume(physicell_config_root);
+ }
