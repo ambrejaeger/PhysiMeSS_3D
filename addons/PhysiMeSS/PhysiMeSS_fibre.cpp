@@ -52,13 +52,8 @@ std::vector<PhysiCell::Cell_Definition*>* getFibreCellDefinitions() {
 
 PhysiMeSS_Fibre::PhysiMeSS_Fibre() 
 {
-    // std::cout << "PhysiMeSS_Fibre constructor,";
     fibres_crosslinkers.clear();
     fibres_crosslink_point.clear();
-    
-    // mLength = PhysiCell::NormalRandom(PhysiCell::parameters.doubles("fibre_length"), PhysiCell::parameters.doubles("length_normdist_sd")) / 2.0;
-    // mRadius = PhysiCell::parameters.doubles("fibre_radius");
-    // std::cout << "mLength = " << mLength;
     X_crosslink_count = 0;
     fail_count = 0;
 }
