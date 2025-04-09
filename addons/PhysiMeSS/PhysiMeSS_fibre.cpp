@@ -170,98 +170,289 @@ void PhysiMeSS_Fibre::check_out_of_bounds(std::vector<double>& position)
     }
 }
 
-void PhysiMeSS_Fibre::add_potentials_from_cell(PhysiMeSS_Cell* cell) 
-{
-    // fibres only get pushed or rotated by motile cells
-    if (!cell->phenotype.motility.is_motile || X_crosslink_count >= 2) {
+
+//Modification of terminology to prevent confusion in the type of the object
+void PhysiMeSS_Fibre::add_potentials_from_cell(PhysiMeSS_Cell* cell) {
+
+    if ( !(this->phenotype.motility.is_motile) || this->X_crosslink_count >= 2) {
         return;
     }
 
-    double distance = 0.0;
-    nearest_point_on_fibre(cell->position, displacement);
-    for (int index = 0; index < 3; index++) {
-        distance += displacement[index] * displacement[index];
+    nearest_point_on_fibre(cell->position, this->displacement);
+    if (default_microenvironment_options.simulate_2D) {
+        add_potentials_from_cell_2D(cell);
     }
-    distance = std::max(sqrt(distance), 0.00001);
-    // fibre should only interact with cell if it comes within cell radius plus fibre radius (note fibre radius ~2 micron)
-    double R = phenotype.geometry.radius + mRadius;
-    if (distance <= R) {
-        std::vector<double> point_of_impact(3, 0.0);
-        for (int index = 0; index < 3; index++) {
-            point_of_impact[index] = (*cell).position[index] - displacement[index];
+
+    else if (!default_microenvironment_options.simulate_2D) {
+        add_potentials_from_cell_3D(cell);
+    }
+}
+
+
+void PhysiMeSS_Fibre::add_potentials_from_cell_2D(PhysiMeSS_Cell* cell) {
+    double distance = 0.0;
+    this->displacement[2] = 0.0;
+
+    distance = std::max(sqrt(dot_product(this->displacement,this->displacement)), 0.00001);
+
+    double R = cell->phenotype.geometry.radius + mRadius;
+    if (distance > R) {
+        return;
+    }     
+    else {
+        //computation point collision fibre cell
+        std::vector<double> point_of_impact(3, 0.0); 
+        std::transform((*cell).position.begin(), (*cell).position.begin() + 2,
+                        this->displacement.begin(),
+                        point_of_impact.begin(),
+                        [](double pos, double disp) { return pos - disp; });
+
+        //center of rotation
+        std::vector<double> center(3,0.0); 
+        if ( X_crosslink_count == 0 ) {
+            std::copy(this->position.begin(),
+                    this->position.end(),
+                    center.begin()); 
         }
-        // cell-fibre pushing only if fibre no crosslinks
-        if (X_crosslink_count == 0) {
-            //fibre pushing turned on
+        else if ( X_crosslink_count == 1) {
+            std::copy(this->fibres_crosslink_point.begin(),
+                this->fibres_crosslink_point.end(),
+                center.begin()); 
+        }
+
+        std::vector<double> center_to_impact_vector(3,0.0);
+        std::transform(center.begin(), center.begin() + 2,
+                        point_of_impact.begin(),
+                        center_to_impact_vector.begin(),
+                        [](double pos, double imp) { return imp - pos; });
+        double norm_center_to_impact = sqrt(dot_product(center_to_impact_vector, center_to_impact_vector));
+        
+        std::vector<double> old_orientation(3,0.0);
+        std::transform(center_to_impact_vector.begin(), center_to_impact_vector.begin() + 2,
+                        old_orientation.begin(),
+                        [norm_center_to_impact](double pos) { return pos/norm_center_to_impact; });
+
+        if (cell->custom_data["fibre_rotation"] > 0.5) {
+            if (norm_center_to_impact < 1e-10) { 
+                    return; 
+            }
+
+            std::vector<double> torque(3,0.0);
+            torque = cross_product(center_to_impact_vector,(*cell).phenotype.motility.motility_vector);
+
+            // moment_arm_magnitude = length of pivot if orientation is a unit vector
+            double torque_magnitude = sqrt(dot_product(torque,torque));
+            double fibre_length = 2 * mLength;     
+            double moment_of_inertia = fibre_length * fibre_length / 12; //Formula for a rod
+                    
+            double angular_acceleration = custom_data["fibre_sticky"] * torque_magnitude / moment_of_inertia;
+            double angle = angular_acceleration;
+            
+            if( angular_acceleration < 1e-16 ) {
+                    return;
+            }    
+            //torque normalisation 
+            std::transform(torque.begin(), torque.end(),
+                        torque.begin(),
+                        [torque_magnitude](double tor) { return tor/torque_magnitude; });
+                    
+            double c = std::cos(angle);
+            double s = std::sin(angle);
+
+            std::vector<double> v_cross_k(3,0.0);
+            // (k x v)
+            v_cross_k = cross_product(torque,old_orientation);
+            std::vector<double> new_orientation(3,0.0);
+                    
+            std::transform(old_orientation.begin(), old_orientation.begin() + 2,
+                            v_cross_k.begin(),
+                            new_orientation.begin(),
+                            [c, s](double or_val, double v_val) { return or_val * c + v_val * s; });
+
+            state.orientation = new_orientation;
+
+            normalize(&state.orientation);
+
+            //CASE WHERE THE CROSSLINK POINT DIFFERENT FROM CENTER IS THE CENTER OF ROTATION
+            double distance_center_position = PhysiCell::dist(this->position, center);
+            
+            std::vector<double> center_to_position_vector(3,0.0);
+            std::transform(this->position.begin(), this->position.begin() + 2,
+                            center.begin(),
+                            center_to_position_vector.begin(),
+                            [](double p, double c) { return p - c; });
+
+            if ( distance_center_position > 1e-10) {
+                if (dot_product(state.orientation,center_to_position_vector)/distance_center_position > 0) {
+                    for (int i=0; i<2; i++ ) {
+                        this-> position[i] = state.orientation[i] * distance_center_position + center[i];
+                    }
+                }
+                else { 
+                    for (int i=0; i<2; i++ ) {
+                        this-> position[i] = -state.orientation[i]* distance_center_position + center[i];
+                    }
+                }
+            }   
+        }
+        //cell-fibre pushing only if fibre has no crosslinks or if it has crosslink and its crosslinkers has no more than 2
+        if ( X_crosslink_count == 0 || 
+            ((this->fibres_crosslinkers).size() == 1 && static_cast<PhysiMeSS_Fibre*>((this->fibres_crosslinkers[0]))->fibres_crosslinkers.size() < 3)) {       
             if (cell->custom_data["fibre_pushing"] > 0.5) {
                 // as per PhysiCell
-                static double simple_pressure_scale = 0.027288820670331;
-                // temp_r = 1 - distance/R;
-                double temp_r = 0;
-                temp_r = -distance;
-                temp_r /= R;
-                temp_r += 1.0;
+                static double simple_pressure_scale = 0.027288820670331;//what does this do precisely?
+                double temp_r = 1.0 - distance/R;
+                temp_r *= temp_r;
+                state.simple_pressure += (temp_r / simple_pressure_scale);
+                
+                double effective_repulsion = sqrt(phenotype.mechanics.cell_cell_repulsion_strength *
+                                            (*cell).phenotype.mechanics.cell_cell_repulsion_strength);
+                temp_r *= effective_repulsion;
+                
+                if (fabs(temp_r) > 1e-16) {// if temp_r very small <=> almost no overlap between fibre and cell, the overlap must be "significant" for rotation to occur
+                    temp_r /= distance; //temp_r = (1.0 - distance/R)²/distance      
+                    naxpy(&velocity, temp_r, displacement); // Performs the operation: this->velocity = this->velocity - temp_r * displacement
+                }
+            }
+        }
+    }
+}
+
+/*
+In 3D simulation, this functions modifies the velocity and orientation of a fibre in function of the cells in contact with it.
+*/
+void PhysiMeSS_Fibre::add_potentials_from_cell_3D(PhysiMeSS_Cell* cell) {
+    double distance = 0.0;
+    distance = std::max(sqrt(dot_product(this->displacement,this->displacement)), 0.00001);
+    double R = cell->phenotype.geometry.radius + this->mRadius;
+
+    if (distance > R){
+        return; // no interaction
+    }
+    else if (distance <= R) { 
+        std::vector<double> point_of_impact(3, 0.0); // displacement vector is the vector from cell center to the nearest position on the fibre,
+        // point of impact is the point on the fibre vector nearest to the cell
+        std::transform((*cell).position.begin(), (*cell).position.end(),
+                        this->displacement.begin(),
+                        point_of_impact.begin(),
+                        [](double pos, double disp) { return pos - disp; });
+        
+         //center of rotation
+         std::vector<double> center(3,0.0); 
+         if ( X_crosslink_count == 0 ) {
+             std::copy(this->position.begin(),
+                     this->position.end(),
+                     center.begin()); 
+         }
+         else if ( X_crosslink_count == 1) {
+             std::copy(this->fibres_crosslink_point.begin(),
+                 this->fibres_crosslink_point.end(),
+                 center.begin()); 
+         }
+         std::vector<double> center_to_impact_vector(3,0.0);
+         std::transform(center.begin(), center.end(),
+                         point_of_impact.begin(),
+                         center_to_impact_vector.begin(),
+                         [](double pos, double imp) { return imp - pos; });
+         double norm_center_to_impact = sqrt(dot_product(center_to_impact_vector, center_to_impact_vector));
+         
+         std::vector<double> old_orientation(3,0.0);
+         std::transform(center_to_impact_vector.begin(), center_to_impact_vector.end(),
+                         old_orientation.begin(),
+                         [norm_center_to_impact](double pos) { return pos/norm_center_to_impact; });
+        
+        if (cell->custom_data["fibre_rotation"] > 0.5) {
+            if (norm_center_to_impact < 1e-10) { 
+                return; 
+            }
+
+            //torque = orientation x motility
+            std::vector<double> torque(3,0.0);
+            torque = cross_product(center_to_impact_vector,(*cell).phenotype.motility.motility_vector);
+
+            // moment_arm_magnitude = length of pivot if orientation is a unit vector
+            double torque_magnitude = sqrt(dot_product(torque,torque));
+            double fibre_length = 2 * mLength;
+
+            double moment_of_inertia = fibre_length * fibre_length / 12; //Formula for a rod
+            double angular_acceleration = custom_data["fibre_sticky"] * torque_magnitude / moment_of_inertia;
+            double angle = angular_acceleration;
+                
+            if( angular_acceleration < 1e-16 ) {
+                // if angular acceleration is small no tilt
+                return;
+            }
+
+            //torque normalization
+            std::transform(torque.begin(), torque.end(),
+                        torque.begin(),
+                        [torque_magnitude](double tor) { return tor/torque_magnitude; });
+            
+
+            double c = std::cos(angle);
+            double s = std::sin(angle);
+            
+            // (k x v)
+            std::vector<double> v_cross_k(3,0.0);
+            v_cross_k = cross_product(torque,old_orientation);
+
+            // Because pivot dot v=0 if pivot is perpendicular
+            // the full Rodrigues formula simplifies (https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula):
+            // v_new = vc + (k x v)s
+
+            std::vector<double> new_orientation(3,0.0);
+            std::transform(old_orientation.begin(), old_orientation.end(),
+                            v_cross_k.begin(),
+                            new_orientation.begin(),
+                            [c, s](double or_val, double v_val) { return or_val * c + v_val * s; });
+
+            state.orientation = new_orientation;
+            normalize(&state.orientation);
+
+            //CASE WHERE THE CROSSLINK POINT DIFFERENT FROM CENTER IS THE CENTER OF ROTATION
+            double distance_center_position = PhysiCell::dist(this->position, center);
+            
+            std::vector<double> center_to_position_vector(3,0.0);
+            std::transform(this->position.begin(), this->position.end(),
+                            center.begin(),
+                            center_to_position_vector.begin(),
+                            [](double p, double c) { return p - c; });
+
+            if ( distance_center_position > 1e-10) {
+                if (dot_product(state.orientation,center_to_position_vector)/distance_center_position > 0) {
+                    for (int i=0; i<3; i++ ) {
+                        this-> position[i] = state.orientation[i] * distance_center_position + center[i];
+                    }
+                }
+                else { 
+                    for (int i=0; i<3; i++ ) {
+                        this-> position[i] = -state.orientation[i]* distance_center_position + center[i];
+                    }
+                }
+            }   
+        }
+
+        if ( X_crosslink_count == 0 || 
+            ((this->fibres_crosslinkers).size() == 1 && static_cast<PhysiMeSS_Fibre*>((this->fibres_crosslinkers[0]))->fibres_crosslinkers.size() < 3)) {       
+            if (cell->custom_data["fibre_pushing"] > 0.5) {
+                // as per PhysiCell
+                static double simple_pressure_scale = 0.027288820670331;//what does this do precisely?
+                double temp_r = 1 - distance/R;
                 temp_r *= temp_r;
                 // add the relative pressure contribution NOT SURE IF NEEDED
                 state.simple_pressure += (temp_r / simple_pressure_scale);
 
                 double effective_repulsion = sqrt(phenotype.mechanics.cell_cell_repulsion_strength *
-                                                    (*cell).phenotype.mechanics.cell_cell_repulsion_strength);
+                (*cell).phenotype.mechanics.cell_cell_repulsion_strength);
                 temp_r *= effective_repulsion;
 
-                if (fabs(temp_r) < 1e-16) { return; }
-                temp_r /= distance;
-                naxpy(&velocity, temp_r, displacement);
-            }
-
-            // fibre rotation turned on (2D)
-            if (cell->custom_data["fibre_rotation"] > 0.5) {
-                std::vector<double> old_orientation(3, 0.0);
-                for (int i = 0; i < 2; i++) {
-                    old_orientation[i] = state.orientation[i];
+                if (fabs(temp_r) > 1e-16) {// if temp_r very small <=> almost no overlap between fibre and cell, the overlap must be "significant" for rotation to occur
+                    temp_r /= distance; //temp_r = (1.0 - distance/R)²/distance      
+                    naxpy(&velocity, temp_r, displacement); // Performs the operation: this->velocity = this->velocity - temp_r * displacement
                 }
-
-                double moment_arm_magnitude = sqrt(
-                        point_of_impact[0] * point_of_impact[0] + point_of_impact[1] * point_of_impact[1]);
-                double impulse = cell->custom_data["fibre_sticky"]*(*cell).phenotype.motility.migration_speed * moment_arm_magnitude;
-                double fibre_length = 2 * mLength;
-                double angular_velocity = impulse / (0.5 * fibre_length * fibre_length);
-                double angle = angular_velocity;
-                state.orientation[0] = old_orientation[0] * cos(angle) - old_orientation[1] * sin(angle);
-                state.orientation[1] = old_orientation[0] * sin(angle) + old_orientation[1] * cos(angle);
-                normalize(&state.orientation);
             }
-        }
-
-        // fibre rotation around other fibre (2D only and fibres intersect at a single point)
-        if (cell->custom_data["fibre_rotation"] > 0.5 && X_crosslink_count == 1) {
-            double distance_fibre_centre_to_crosslink = 0.0;
-            std::vector<double> fibre_centre_to_crosslink(3, 0.0);
-            for (int i = 0; i < 2; i++) {
-                fibre_centre_to_crosslink[i] = fibres_crosslink_point[i]-position[i];
-                distance_fibre_centre_to_crosslink += fibre_centre_to_crosslink[i]*fibre_centre_to_crosslink[i];
-            }
-            distance_fibre_centre_to_crosslink = sqrt(distance_fibre_centre_to_crosslink);
-
-            std::vector<double> old_orientation(3, 0.0);
-            for (int i = 0; i < 2; i++) {
-                old_orientation[i] = state.orientation[i];
-            }
-            double moment_arm_magnitude = sqrt(
-                    point_of_impact[0] * point_of_impact[0] + point_of_impact[1] * point_of_impact[1]);
-            double impulse = cell->custom_data["fibre_sticky"]*(*cell).phenotype.motility.migration_speed * moment_arm_magnitude;
-            double fibre_length = 2 * mLength;
-            double angular_velocity = impulse / (0.5 * fibre_length * fibre_length);
-            double angle = angular_velocity;
-            state.orientation[0] = old_orientation[0] * cos(angle) - old_orientation[1] * sin(angle);
-            state.orientation[1] = old_orientation[0] * sin(angle) + old_orientation[1] * cos(angle);
-            normalize(&state.orientation);
-            position[0] = fibres_crosslink_point[0]-distance_fibre_centre_to_crosslink*state.orientation[0];
-            position[1] = fibres_crosslink_point[1]-distance_fibre_centre_to_crosslink*state.orientation[1];
         }
     }
-
-    return;
 }
 
 

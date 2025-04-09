@@ -30,6 +30,8 @@ class PhysiMeSS_Fibre : public PhysiMeSS_Agent
     void check_out_of_bounds(std::vector<double>& position);
     virtual void add_potentials_from_fibre(PhysiMeSS_Fibre* other_fibre);
     virtual void add_potentials_from_cell(PhysiMeSS_Cell* cell);
+    virtual void add_potentials_from_cell_2D(PhysiMeSS_Cell* cell);
+    virtual void add_potentials_from_cell_3D(PhysiMeSS_Cell* cell);
 
     void register_fibre_voxels();
     void deregister_fibre_voxels();
