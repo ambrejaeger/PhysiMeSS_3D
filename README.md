@@ -20,7 +20,13 @@ PhysiMeSS comes with a dedicated sample project, called **physimess-sample**. To
 ```
 
 ## Pre-loaded examples 
-The following example directories are populated in config directory once the **physimess-sample** project is loaded as above.
+The following example directories are populated in config directory once the **physimess-sample** project is loaded as above. The previous commands compiles and creates the .exe file by default named project i your working directory. To run the following example, you need to specify the location of .xml setting file populated in the config folder. You can as well overwrite the output folder of the simulation set in the .xml setting file directly from the command line. For instance in Linux, for the Fibre_Degradation_3D:
+
+```
+./project -s "./config/Fibre_Degradation_3D/PhysiCell_settings_modified.xml" -o "./output/Fibre_Degradation"
+```
+After ```-o``` or ```--output```: specify the path to the desired output folder. If not specified the output folder is the one specified in your setting file
+After ```-s``` or ```--settings```: specify the path to your setting .xml file. If not specified the default is ```./config/PhysiCell_settings.xml```
 
 ### Fibre_Initialisation
 The directory Fibre_Initialisation contains simple examples in which you can initialise ECM fibres in the domain. Fibres are cylindrical agents described by their centre, radius, length and orientation. The centre of each fibre is prescribed either from a csv file or at random (as per cells in PhysiCell). The other attributes can be altered via user parameters in the xml or GUI. The following default parameters are found in ```mymodel_initialisation.xml```
