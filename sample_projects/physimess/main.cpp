@@ -202,15 +202,29 @@ int main( int argc, char* argv[] )
 			}
 			
 			// save SVG plot if it's time
-			if( fabs( PhysiCell_globals.current_time - PhysiCell_globals.next_SVG_save_time  ) < 0.01 * diffusion_dt )
+			
+			// save SVG plot if it's time
+			if( PhysiCell_globals.current_time > PhysiCell_globals.next_SVG_save_time - 0.5 * diffusion_dt ) // Why substract the half of diffusion dt ? 
 			{
 				if( PhysiCell_settings.enable_SVG_saves == true )
 				{	
 					sprintf( filename , "%s/snapshot%08u.svg" , PhysiCell_settings.folder.c_str() , PhysiCell_globals.SVG_output_index ); 
 					SVG_plot( filename , microenvironment, 0.0 , PhysiCell_globals.current_time, cell_coloring_function, substrate_coloring_function, cellcount_function );
-					
-					PhysiCell_globals.SVG_output_index++; 
-					PhysiCell_globals.next_SVG_save_time  += PhysiCell_settings.SVG_save_interval;
+				}
+
+				//add a condition to save as .vtp if wanted, saving is done in the form of a xml vtp file, look at vtk documentation for more information
+				if( PhysiCell::enable_vtk_saves == true )
+				{
+					// we are going to reuse the SVG output index
+					sprintf( filename , "%s/output%08u.vtm" , PhysiCell_settings.folder.c_str() , PhysiCell_globals.SVG_output_index ); 
+					vtp_save( filename );
+				}
+
+				//vtk and svg sampling are performed at the same time if the SVG or the vtk sampling are enabled we must increment the index
+				if( PhysiCell_settings.enable_SVG_saves == true || PhysiCell::enable_vtk_saves == true)
+				{
+				PhysiCell_globals.SVG_output_index++; 
+				PhysiCell_globals.next_SVG_save_time += PhysiCell_settings.SVG_save_interval;
 				}
 			}
 
