@@ -5,6 +5,7 @@
 #include "../../modules/PhysiCell_pathology.h"
 #include "PhysiMeSS_cell.h"
 #include "PhysiMeSS_fibre.h"
+#include "PhysiMeSS_vtk.h"
 
 #include <list>
 
