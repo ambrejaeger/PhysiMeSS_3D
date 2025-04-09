@@ -60,12 +60,12 @@ PhysiMeSS_Fibre::PhysiMeSS_Fibre()
 
 void PhysiMeSS_Fibre::assign_fibre_orientation() 
 { 
-    mLength = PhysiCell::NormalRandom(this->custom_data["fibre_length"], this->custom_data["length_normdist_sd"]) / 2.0;
+    mLength = PhysiCell::NormalRandom(this->custom_data["fibre_length"], this->custom_data["length_normdist_sd"]) / 2.0;//mLength initialization
     mRadius = this->custom_data["fibre_radius"];
     this->assign_orientation();
     if (default_microenvironment_options.simulate_2D) {
         if (this->custom_data["anisotropic_fibres"] > 0.5){
-            double theta = PhysiCell::NormalRandom(this->custom_data["fibre_angle"], this->custom_data["angle_normdist_sd"]);
+            double theta = PhysiCell::NormalRandom(this->custom_data["fibre_angle_theta"], this->custom_data["angle_normdist_sd"]);
             this->state.orientation[0] = cos(theta);
             this->state.orientation[1] = sin(theta);
         }
@@ -75,7 +75,17 @@ void PhysiMeSS_Fibre::assign_fibre_orientation()
         this->state.orientation[2] = 0.0;
     }
     else {
-        this->state.orientation = PhysiCell::UniformOnUnitSphere();
+        if (this->custom_data["anisotropic_fibres"] > 0.5) {
+            double theta = PhysiCell::NormalRandom(this->custom_data["fibre_angle_theta"], this->custom_data["angle_normdist_sd"]);
+            double phi = PhysiCell::NormalRandom(this->custom_data["fibre_angle_phi"], this->custom_data["angle_normdist_sd"]);
+            this->state.orientation[0] = cos(theta)*sin(phi);
+            this->state.orientation[1] = sin(theta)*sin(phi);
+            this->state.orientation[2] = cos(phi);
+        }
+        else {
+            this->state.orientation = PhysiCell::UniformOnUnitSphere();
+        }
+        
     }
     //###########################################//
     //   this bit a hack for PacMan and maze	 //
