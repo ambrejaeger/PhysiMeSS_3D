@@ -215,7 +215,6 @@ void setup_tissue( void )
 		given a relative volume index between 0 and 1 */
 
 		if(!isFibreFromFile) {
-			std::cout << "This part is beaing read ? " << std::endl;
 			int my_type = read_FibreID(); 
 			Cell_Definition* pCD = find_cell_definition( my_type );
 			if( pCD != NULL )
@@ -389,10 +388,15 @@ void PhysiMeSS_Cell_Custom_Degrade::degrade_fibre(PhysiMeSS_Fibre* pFibre)
 bool read_isFibreFromFile_status(pugi::xml_node config_root) {
 	pugi::xml_node node;
 	// Assign values to node and enable_vtk_saves inside a function
-	 node = xml_find_node(config_root, "initial_conditions");
-	 node = xml_find_node(node, "fibres_from_file");
-	bool isFibreFromFile = xml_get_bool_value(node, "enable");
-	return isFibreFromFile;
+	node = xml_find_node(config_root, "initial_conditions");
+	node = xml_find_node(node, "fibres_from_file");
+	if (node) {
+		bool isFibreFromFile = xml_get_bool_value(node, "enable");
+		return isFibreFromFile;
+	}
+	else{
+		return true; // by default fibres are thought to be defined in the file
+	}
  }
  
  bool read_isFibreFromFile_status(void) {
