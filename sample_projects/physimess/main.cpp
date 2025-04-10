@@ -72,6 +72,10 @@
 #include <cmath>
 #include <omp.h>
 #include <fstream>
+#include <iostream>
+#include <string>
+#include <cstring> // for strcmp
+#include <sys/stat.h> // for mkdir
 
 #include "./core/PhysiCell.h"
 #include "./modules/PhysiCell_standard_modules.h" 
