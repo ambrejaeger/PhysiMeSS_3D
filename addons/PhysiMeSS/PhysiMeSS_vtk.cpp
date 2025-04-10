@@ -19,9 +19,13 @@ void read_save_vtk_status(pugi::xml_node config_root) {
    pugi::xml_node node;
    node = xml_find_node(config_root, "save");
    node = xml_find_node(node, "VTK");
-   enable_vtk_saves = xml_get_bool_value(node, "enable");
-   std::cout << "Enable vtk save: " << enable_vtk_saves << std::endl;
-
+   if (node) {
+      enable_vtk_saves = xml_get_bool_value(node, "enable");
+      std::cout << "Enable vtk save: " << enable_vtk_saves << std::endl;
+   }
+   else {
+      std::cout << "VTK save not specified" << std::endl;
+   }
 }
 
 void read_save_vtk_status(void) {
