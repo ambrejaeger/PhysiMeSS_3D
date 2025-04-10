@@ -11,6 +11,14 @@ PhysiMeSS paper is available on Gigabyte : [https://gigabytejournal.com/articles
 
 DOI: [10.46471/gigabyte.136](https://doi.org/10.46471/gigabyte.136).
 
+## Requirements for 3D vizualisation 
+If you wish to generate file using VTK readable directly in parawiew, you will need to install:
+- VTK : https://docs.vtk.org/en/latest/getting_started/index.html 
+- Paraview : https://www.paraview.org/download/ 
+
+Test were only performed using VTK 9.4.1 and Paraview 5.11.0.
+Paraview documentation and tutorial are available [here](https://docs.paraview.org/en/v5.11.0/UsersGuide/index.html).
+
 ## Dedicated sample project
 PhysiMeSS comes with a dedicated sample project, called **physimess-sample**. To build it, go to the root directory and use : 
 
