@@ -183,18 +183,18 @@ PhysiCell_geometry.o: ./modules/PhysiCell_geometry.cpp
 # PhysiMeSS 
 
 PhysiMeSS_agent.o: ./addons/PhysiMeSS/PhysiMeSS_agent.cpp 
-	$(COMPILE_COMMAND) -c ./custom_modules/PhysiMeSS_agent.cpp
+	$(COMPILE_COMMAND) -c ./addons/PhysiMeSS/PhysiMeSS_agent.cpp
 
 PhysiMeSS_cell.o: ./addons/PhysiMeSS/PhysiMeSS_cell.cpp 
 	$(COMPILE_COMMAND) -c ./addons/PhysiMeSS/PhysiMeSS_cell.cpp
 
-PhysiMeSS_fibre.o: ./custom_modules/PhysiMeSS_fibre.cpp 
+PhysiMeSS_fibre.o: ./addons/PhysiMeSS/PhysiMeSS_fibre.cpp 
 	$(COMPILE_COMMAND) -c ./addons/PhysiMeSS/PhysiMeSS_fibre.cpp
 
-PhysiMeSS.o: ./custom_modules/PhysiMeSS.cpp 
-	$(COMPILE_COMMAND) -c ./addons/PhysiMeSS/PhysiMeSS.cpp
+PhysiMeSS.o: ./addons/PhysiMeSS/PhysiMeSS.cpp 
+	$(COMPILE_COMMAND) -c ./addons/PhysiMeSS/PhysiMeSS/PhysiMeSS.cpp
 
-PhysiMeSS_vtk.o: ./custom_modules/PhysiMeSS_vtk.cpp 
+PhysiMeSS_vtk.o: ./addons/PhysiMeSS/PhysiMeSS_vtk.cpp 
 	$(COMPILE_COMMAND) -c ./addons/PhysiMeSS/PhysiMeSS_vtk.cpp
 
 # user-defined PhysiCell modules
