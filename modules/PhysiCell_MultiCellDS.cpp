@@ -1019,7 +1019,6 @@ void add_PhysiCell_cells_to_open_xml_pugi_v2( pugi::xml_document& xml_dom, std::
     		if (it != pCell->custom_data.variables.end()) 
     		{
 				std::fwrite(&(it->value), sizeof(double), 1, fp); 
-				std::cout << "writing value" << std::endl;
     		}
     		else
     		{
