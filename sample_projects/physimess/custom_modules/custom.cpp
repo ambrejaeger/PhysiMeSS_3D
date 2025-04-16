@@ -133,11 +133,15 @@ void create_cell_types( void )
 	cell_defaults.functions.contact_function = contact_function; 
     
 	for (auto* pCD: *getFibreCellDefinitions()){
+		Variable crosslink_count = Variable();
+		crosslink_count.name = "crosslink_count";
+		crosslink_count.value = 0.0;
+		pCD->custom_data.add_variable(crosslink_count);
 		pCD->functions.instantiate_cell = instantiate_physimess_fibre;
 		pCD->functions.plot_agent_SVG = fibre_agent_SVG;
 		pCD->functions.plot_agent_legend = fibre_agent_legend;
-	
-	}
+		
+		}
 
 	for (auto* pCD: cell_definitions_by_index){
 		if (!isFibre(pCD) && pCD->custom_data.find_variable_index("fibre_custom_degradation") > 0){	

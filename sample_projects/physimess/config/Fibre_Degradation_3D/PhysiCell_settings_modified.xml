@@ -23,7 +23,7 @@
 	</overall>
 	
 	<parallel>
-		<omp_num_threads>1</omp_num_threads>
+		<omp_num_threads>2</omp_num_threads>
 	</parallel> 
 	
 	<save>
@@ -39,9 +39,6 @@
 			<enable>true</enable>
 		</SVG>
 
-    <VTK>
-			<enable>true</enable>
-		</VTK>
 		
 		<legacy_data>
 			<enable>false</enable>
@@ -383,21 +380,20 @@
               <uptake_rate units="1/min">0.0</uptake_rate>
               <net_export_rate units="total substrate/min">0.0</net_export_rate>
             </substrate>
-            </secretion>
+          </secretion>
 
-          </phenotype>
+        </phenotype>
         <custom_data>
-        <anisotropic_fibres units="none" description="flag for whether we want anisotropic fibres">1.0</anisotropic_fibres>
-        <fibre_length units="none" description="fibre length">40.0</fibre_length>
-        <length_normdist_sd units="none" description="standard deviation of fibre length">0.0</length_normdist_sd>
-        <fibre_radius units="none" description="fibre radius">2.0</fibre_radius>
-        <radius_normdist_sd units="none" description="standard deviation of fibre length">0.0</radius_normdist_sd>
-        <fibre_angle_theta units="none" desctription="angle of fibre direction between 0 an 2*pi (used for 2D orientation setting)">0.0</fibre_angle_theta>
-        <fibre_angle_phi units="none" desctription="angle of fibre direction between 0 and pi">0.0</fibre_angle_phi>
-        <angle_normdist_sd units="none" description="standard deviation of fibre angles">1.5</angle_normdist_sd>
-        
-          </custom_data>
-          </cell_definition>
+          <anisotropic_fibres units="none" description="flag for whether we want anisotropic fibres">1.0</anisotropic_fibres>
+          <fibre_length units="none" description="fibre length">40.0</fibre_length>
+          <length_normdist_sd units="none" description="standard deviation of fibre length">0.0</length_normdist_sd>
+          <fibre_radius units="none" description="fibre radius">2.0</fibre_radius>
+          <radius_normdist_sd units="none" description="standard deviation of fibre length">0.0</radius_normdist_sd>
+          <fibre_angle_theta units="none" desctription="angle of fibre direction between 0 an 2*pi (used for 2D orientation setting)">0.0</fibre_angle_theta>
+          <fibre_angle_phi units="none" desctription="angle of fibre direction between 0 and pi">0.0</fibre_angle_phi>
+          <angle_normdist_sd units="none" description="standard deviation of fibre angles">1.5</angle_normdist_sd>
+        </custom_data>
+      </cell_definition>
           
       <cell_definition name="attractant" ID="2">
         <phenotype>

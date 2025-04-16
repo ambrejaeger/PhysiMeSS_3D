@@ -9,6 +9,7 @@ static double last_update_time = -mechanics_dt;
 void remove_physimess_out_of_bounds_fibres()
 {
     for (auto* cell : *all_cells) {
+        
         if (isFibre(cell) && static_cast<PhysiMeSS_Fibre*>(cell)->fail_count >= 10)
         {
             // std::cout << "I failed to place " << cell->type_name << " " 
@@ -68,6 +69,7 @@ void physimess_update_cell_velocity( Cell* pCell, Phenotype& phenotype, double d
         static_cast<PhysiMeSS_Fibre*>(pCell)->X_crosslink_count = 0;
         if (static_cast<PhysiMeSS_Fibre*>(pCell)->fibres_crosslinkers.size() > 0){
             static_cast<PhysiMeSS_Fibre*>(pCell)->X_crosslink_count = static_cast<PhysiMeSS_Fibre*>(pCell)->fibres_crosslinkers.size();
+            pCell->custom_data["crosslink_count"] =  static_cast<PhysiMeSS_Fibre*>(pCell)->X_crosslink_count;
         }
 
     }

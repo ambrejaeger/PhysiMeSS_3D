@@ -48,11 +48,9 @@ else
 	endif
 endif
 
-CFLAGS_LINK := $(shell echo $(CFLAGS) | sed -e "s/-fopenmp//g")
-EXTRA_FLAGS := -I/usr/include/vtk-9.1
-EXTRA_FLAGS_LINK := -L/usr/lib/x86_64-linux-gnu
-COMPILE_COMMAND := $(CC) $(CFLAGS)  $(EXTRA_FLAGS)
-LINK_COMMAND := $(CC) $(CFLAGS_LINK) $(EXTRA_FLAGS_LINK)
+CFLAGS_LINK := CFLAGS_LINK := $(shell echo $(CFLAGS) | sed -e "s/-fopenmp//g")
+COMPILE_COMMAND := $(CC) $(CFLAGS)
+LINK_COMMAND := $(CC) $(CFLAGS_LINK)
 
 BioFVM_OBJECTS := BioFVM_vector.o BioFVM_mesh.o BioFVM_microenvironment.o BioFVM_solvers.o BioFVM_matlab.o \
 BioFVM_utilities.o BioFVM_basic_agent.o BioFVM_MultiCellDS.o BioFVM_agent_container.o 
@@ -64,7 +62,7 @@ PhysiCell_signal_behavior.o PhysiCell_rules.o
 PhysiCell_module_OBJECTS := PhysiCell_SVG.o PhysiCell_pathology.o PhysiCell_MultiCellDS.o PhysiCell_various_outputs.o \
 PhysiCell_pugixml.o PhysiCell_settings.o PhysiCell_geometry.o
 
-PhysiMeSS_OBJECTS := PhysiMeSS.o PhysiMeSS_agent.o PhysiMeSS_fibre.o PhysiMeSS_cell.o PhysiMeSS_vtk.o
+PhysiMeSS_OBJECTS := PhysiMeSS.o PhysiMeSS_agent.o PhysiMeSS_fibre.o PhysiMeSS_cell.o
 
 # put your custom objects here (they should be in the custom_modules directory)
 
@@ -76,12 +74,11 @@ PhysiCell_OBJECTS := $(BioFVM_OBJECTS)  $(pugixml_OBJECTS) $(PhysiCell_core_OBJE
 ALL_OBJECTS := $(PhysiCell_OBJECTS) $(PhysiMeSS_OBJECTS) $(PhysiCell_custom_module_OBJECTS)
 
 # compile the project 
-
 all: main.cpp $(ALL_OBJECTS)
-	$(COMPILE_COMMAND) $(EXTRA_FLAGS_LINK) -o $(PROGRAM_NAME) $(ALL_OBJECTS) main.cpp -lvtkCommonCore-9.1 -lvtkCommonColor-9.1 -lvtkCommonMisc-9.1 -lvtkCommonSystem-9.1 -lvtkCommonSystem-9.1 -lvtkCommonTransforms-9.1 -lvtkIOCore-9.1 -lvtkIOXML-9.1 -lvtkIOXMLParser-9.1 -lvtkkissfft-9.1 -lvtkloguru-9.1 -lvtksys-9.1  -lvtkIOXML-9.1 -lvtkIOLegacy-9.1 -lvtkFiltersCore-9.1 -lvtkFiltersSources-9.1 -lvtkFiltersPoints-9.1 -lvtkIOGeometry-9.1 -lvtkCommonDataModel-9.1 -lvtkCommonExecutionModel-9.1
+	$(COMPILE_COMMAND) $(INC) -o $(PROGRAM_NAME) $(ALL_OBJECTS) main.cpp 
 	make name
 
-static: main.cpp $(ALL_OBJECTS) $(MaBoSS)
+static: main.cpp $(ALL_OBJECTS)
 	$(LINK_COMMAND) $(INC) -o $(PROGRAM_NAME) $(ALL_OBJECTS) main.cpp $(LIB) -static-libgcc -static-libstdc++ $(STATIC_OPENMP)
 
 name:
@@ -193,9 +190,6 @@ PhysiMeSS_fibre.o: ./addons/PhysiMeSS/PhysiMeSS_fibre.cpp
 
 PhysiMeSS.o: ./addons/PhysiMeSS/PhysiMeSS.cpp 
 	$(COMPILE_COMMAND) -c ./addons/PhysiMeSS/PhysiMeSS.cpp
-
-PhysiMeSS_vtk.o: ./addons/PhysiMeSS/PhysiMeSS_vtk.cpp 
-	$(COMPILE_COMMAND) -c ./addons/PhysiMeSS/PhysiMeSS_vtk.cpp
 
 # user-defined PhysiCell modules
 
