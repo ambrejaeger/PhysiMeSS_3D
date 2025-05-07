@@ -66,8 +66,8 @@ void PhysiMeSS_Fibre::assign_fibre_orientation()
     if (default_microenvironment_options.simulate_2D) {
         if (this->custom_data["anisotropic_fibres"] > 0.5){
             double theta = PhysiCell::NormalRandom(this->custom_data["fibre_angle"], this->custom_data["angle_normdist_sd"]);
-            this->state.orientation[0] = cos(theta);
-            this->state.orientation[1] = sin(theta);
+            this->state.orientation[0] = std::cos(theta);
+            this->state.orientation[1] = std::sin(theta);
         }
         else{
             this->state.orientation = PhysiCell::UniformOnUnitCircle();
@@ -78,9 +78,11 @@ void PhysiMeSS_Fibre::assign_fibre_orientation()
         if (this->custom_data["anisotropic_fibres"] > 0.5) {
             double theta = PhysiCell::NormalRandom(this->custom_data["fibre_angle"], this->custom_data["angle_normdist_sd"]);
             double phi = PhysiCell::NormalRandom(this->custom_data["fibre_angle_phi"], this->custom_data["angle_normdist_sd"]);
-            this->state.orientation[0] = cos(theta)*sin(phi);
-            this->state.orientation[1] = sin(theta)*sin(phi);
-            this->state.orientation[2] = cos(phi);
+
+            this->state.orientation[0] = std::cos(theta)*std::sin(phi);
+            this->state.orientation[1] = std::sin(theta)*std::sin(phi);
+            this->state.orientation[2] = std::cos(phi);
+            normalize(this->state.orientation);
         }
         else {
             this->state.orientation = PhysiCell::UniformOnUnitSphere();
