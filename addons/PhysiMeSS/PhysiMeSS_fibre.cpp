@@ -635,7 +635,6 @@ void PhysiMeSS_Fibre::check_fibre_crosslinks(PhysiMeSS_Fibre *fibre_neighbor) {
                             this->fibres_crosslink_point[i] = this->position[i] + this->mLength * centre_to_centre[i]; //the chosen crosslink point is the endpoint of this fibre
                             //fibre_neighbor->fibres_crosslink_point[i] = fibre_neighbor->position[i] - fibre_neighbor->mLength * centre_to_centre[i];
                         }
-                        
                         return;
                     }
                     else { 

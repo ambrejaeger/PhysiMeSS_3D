@@ -25,5 +25,5 @@ physimessenv/
 custom_modules/*
 main.cpp
 Makefile
-main_backup.cpp
+main-backup.cpp
 config/PhysiCell_settings.xml
