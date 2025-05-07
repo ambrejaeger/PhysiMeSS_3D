@@ -214,6 +214,7 @@ reset:
 clean:
 	rm -f *.o
 	rm -f $(PROGRAM_NAME)*
+	rm -rf $(VENV_NAME)
 	
 data-cleanup:
 	rm -rf ./output
@@ -244,6 +245,50 @@ unzip:
 untar: 
 	cp ./archives/latest.tar .
 	tar -xzf latest.tar
+
+## For Visualization in paraview:	
+# Configuration
+VENV_NAME = physimessenv
+REQUIRED_PACKAGES = numpy scipy vtk
+PYTHON = python3
+PIP = pip3
+DEFAULT_OUTPUT = "./output"
+# Allow OUTPUT to be overridden by command line argument
+ifdef output
+    OUTPUT = $(output)
+else
+    OUTPUT = $(DEFAULT_OUTPUT)
+endif
+
+# OS detection and commands
+ifeq ($(OS),Windows_NT)
+    SYSTEM = Windows
+    VENV_ACTIVATE = call $(VENV_NAME)\\Scripts\\activate.bat
+    VENV_PYTHON = $(VENV_NAME)\\Scripts\\python.exe
+    VENV_PIP = $(VENV_NAME)\\Scripts\\pip.exe
+    PYTHON_SCRIPT = .\\config\\paraview_viewer.py
+    RUN_COMMAND = $(VENV_ACTIVATE) && echo Running your application in the virtual environment with OUTPUT=$(OUTPUT)... && $(VENV_PYTHON) $(PYTHON_SCRIPT) $(OUTPUT)
+else
+    SYSTEM = $(shell uname -s)
+    VENV_ACTIVATE = . $(VENV_NAME)/bin/activate
+    VENV_PYTHON = $(VENV_NAME)/bin/python
+    VENV_PIP = $(VENV_NAME)/bin/pip
+    PYTHON_SCRIPT = ./config/paraview_viewer.py
+    RUN_COMMAND = $(VENV_ACTIVATE) && echo "Running your application in the virtual environment with OUTPUT=$(OUTPUT)..." && $(VENV_PYTHON) $(PYTHON_SCRIPT) $(OUTPUT)
+endif
+
+vtu:
+	@if [ ! -d "$(VENV_NAME)" ]; then \
+		echo "Creating virtual environment '$(VENV_NAME)'..."; \
+		$(PYTHON) -m venv $(VENV_NAME); \
+		echo "Installing required packages..."; \
+		$(VENV_PIP) install $(REQUIRED_PACKAGES); \
+	else \
+		echo "Virtual environment '$(VENV_NAME)' exists"; \
+		$(VENV_PIP) install --quiet $(REQUIRED_PACKAGES); \
+	fi
+	@$(RUN_COMMAND)
+
 
 # easier animation 
 
