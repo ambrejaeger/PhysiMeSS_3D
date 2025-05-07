@@ -69,7 +69,6 @@ void physimess_update_cell_velocity( Cell* pCell, Phenotype& phenotype, double d
         static_cast<PhysiMeSS_Fibre*>(pCell)->X_crosslink_count = 0;
         if (static_cast<PhysiMeSS_Fibre*>(pCell)->fibres_crosslinkers.size() > 0){
             static_cast<PhysiMeSS_Fibre*>(pCell)->X_crosslink_count = static_cast<PhysiMeSS_Fibre*>(pCell)->fibres_crosslinkers.size();
-            pCell->custom_data["crosslink_count"] =  static_cast<PhysiMeSS_Fibre*>(pCell)->X_crosslink_count;
         }
 
     }
@@ -153,7 +152,7 @@ void physimess_mechanics( double dt )
                 static_cast<PhysiMeSS_Agent*>(pC)->register_fibre_voxels();
             }
         }
-
+        
         #pragma omp parallel for
         for( int i=0; i < (*all_cells).size(); i++ )
         {
@@ -167,7 +166,7 @@ void physimess_mechanics( double dt )
                 static_cast<PhysiMeSS_Agent*>(pC)->find_agent_neighbors();
             }
         }
-
+        
         // #pragma omp parallel for
         // This is not parallel because we are modifying the agend grid
         for( int i=0; i < (*all_cells).size(); i++ )
@@ -188,6 +187,7 @@ void physimess_mechanics( double dt )
                 static_cast<PhysiMeSS_Fibre*>(pC)->add_crosslinks();
             }
         }
+        
     }
 }
 
