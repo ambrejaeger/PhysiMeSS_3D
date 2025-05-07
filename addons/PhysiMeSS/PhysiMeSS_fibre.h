@@ -16,7 +16,7 @@ class PhysiMeSS_Fibre : public PhysiMeSS_Agent
     private:
     public:
     std::vector<PhysiCell::Cell*> fibres_crosslinkers;
-    std::vector<double> fibres_crosslink_point;
+    std::vector<double> fibres_crosslink_point = std::vector<double>(3, 0.0);
     
     double mLength;
     double mRadius;
