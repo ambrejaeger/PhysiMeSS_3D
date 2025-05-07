@@ -19,10 +19,4 @@ project
 studio_debug.log
 user_projects/*
 !user_projects/empty.txt
-config/
-output/*
 physimessenv/
-custom_modules/*
-main.cpp
-main-backup.cpp
-config/PhysiCell_settings.xml
