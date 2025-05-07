@@ -210,7 +210,8 @@ reset:
 	touch ./config/empty.csv
 	rm -f ./config/mymodel.xml *.csv
 	rm -f ./config/paraview_viewer.py
-	rm -f ./config/cells_and_fibre.pvsm
+	rm -f ./config/cells_and_fibres.pvsm
+	rm -f ./config/statevtu.pvsm
 	rm -fr ./config/Cell_Fibre_Mechanics ./config/Cell_Fibre_Mechanics_3D ./config/Fibre_Crosslinks ./config/Fibre_Degradation_3D ./config/Fibre_Initialisation ./config/Neighbours_in_voxels ./config/Fibre_Degradation
 	
 clean:
