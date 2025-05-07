@@ -291,6 +291,44 @@ void setup_tissue( void )
 		}
 	}
 	remove_physimess_out_of_bounds_fibres();
+	
+	//adding a part to remove fibres that overlap with cells initialize at time zero
+	for (auto cell: *all_cells)
+	{
+		if (!isFibre(cell))
+		{
+			for (auto* neighbor: cell->get_container()->agent_grid[cell->get_current_mechanics_voxel_index()])
+        	{
+				if(isFibre(neighbor))
+				{
+					std::vector<double> disp(3,0.0);
+					if (norm(static_cast<PhysiMeSS_Fibre*>(neighbor)->nearest_point_on_fibre(cell->position, disp)) < (*cell).phenotype.geometry.radius + static_cast<PhysiMeSS_Fibre*>(neighbor)->mRadius)
+					{
+						delete_cell(neighbor);
+					}
+				}
+			}
+			for (auto neighbor_voxel_index: cell->get_container()->underlying_mesh.moore_connected_voxel_indices[cell->get_current_mechanics_voxel_index()])
+        	{
+				if(!is_neighbor_voxel(cell, cell->get_container()->underlying_mesh.voxels[cell->get_current_mechanics_voxel_index()].center, cell->get_container()->underlying_mesh.voxels[neighbor_voxel_index].center, neighbor_voxel_index))
+					continue;
+			
+				for (auto* neighbor: cell->get_container()->agent_grid[neighbor_voxel_index])
+				{
+					if(isFibre(neighbor))
+					{
+						
+						std::vector<double> disp(3,0.0);
+						if (norm(static_cast<PhysiMeSS_Fibre*>(neighbor)->nearest_point_on_fibre(cell->position, disp)) < (*cell).phenotype.geometry.radius + static_cast<PhysiMeSS_Fibre*>(neighbor)->mRadius)
+						{
+							delete_cell(neighbor);
+						}
+						
+					}
+				}
+			}
+		}
+	}
 }
 
 std::vector<std::string> paint_by_cell_pressure( Cell* pCell ){
@@ -395,8 +433,7 @@ bool read_isFibreFromFile_status(pugi::xml_node config_root) {
 	node = xml_find_node(config_root, "initial_conditions");
 	node = xml_find_node(node, "fibres_from_file");
 	if (node) {
-		bool isFibreFromFile = xml_get_bool_value(node, "enable");
-		return isFibreFromFile;
+		return xml_get_bool_value(node, "enable");
 	}
 	else{
 		return true; // by default fibres are thought to be defined in the file
@@ -411,10 +448,12 @@ bool read_isFibreFromFile_status(pugi::xml_node config_root) {
 int read_FibreID(pugi::xml_node config_root) {
 	pugi::xml_node node;
 	// Assign values to node and enable_vtk_saves inside a function
-	 node = xml_find_node(config_root, "initial_conditions");
-	 node = xml_find_node(node, "fibres_from_file");
-	int FibreID = xml_get_int_value(node, "ID");
-	return FibreID;
+	node = xml_find_node(config_root, "initial_conditions");
+	node = xml_find_node(node, "fibres_from_file");
+	if (!node.child("ID")) {
+        return 1;
+    }
+	return xml_get_int_value(node, "ID");
  }
  
  int read_FibreID(void) {
@@ -423,11 +462,14 @@ int read_FibreID(pugi::xml_node config_root) {
 
  double read_RelativeFibreVolume(pugi::xml_node config_root) {
 	pugi::xml_node node;
+
 	// Assign values to node and enable_vtk_saves inside a function
-	 node = xml_find_node(config_root, "initial_conditions");
-	 node = xml_find_node(node, "fibres_from_file");
-	double relative_volume = xml_get_double_value(node, "relative_fibre_volume");
-	return relative_volume;
+	node = xml_find_node(config_root, "initial_conditions");
+	node = xml_find_node(node, "fibres_from_file");
+	if (!node.child("relative_fibre_volume")) {
+        return 0.0;
+    }
+	return xml_get_double_value(node, "relative_fibre_volume");;
  }
  
  double read_RelativeFibreVolume(void) {
