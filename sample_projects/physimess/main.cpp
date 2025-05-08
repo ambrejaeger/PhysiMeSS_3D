@@ -90,63 +90,60 @@ using namespace PhysiCell;
 int main( int argc, char* argv[] )
 {
 	// load and parse settings file(s)
-	
 	bool XML_status = false;
-    std::string settings_file;
-    std::string output_folder = "./output"; // Default output folder
+	std::string settings_file;
+	std::string output_folder = "./output"; // Default output folder
 	bool OutputFromCommandLine = false;
-    char copy_command[1024];
+	bool SettingsFromCommandLine = false;
+	char copy_command[1024];
 
-    // Loop TWICE through the command-line arguments
-	
-    for (int i = 1; i < argc; ++i)
-	{	
-	//First the output folder if different than default must be identified
-
-	if (strcmp(argv[i], "-o") == 0 || strcmp(argv[i], "--output") == 0)
-        {
-            // The next argument is the output folder
-            if (i + 1 < argc)
-            {
-                output_folder = argv[i + 1];
+	// First pass: check for output folder option
+	for (int i = 1; i < argc; ++i) {
+		if (strcmp(argv[i], "-o") == 0 || strcmp(argv[i], "--output") == 0) {
+			// The next argument is the output folder
+			if (i + 1 < argc) {
+				output_folder = argv[i + 1];
 				OutputFromCommandLine = true;
 				std::cout << "output_folder is " << output_folder << std::endl;
-                mkdir(output_folder.c_str(), 0777); // Create the output folder with read/write/execute permissions
-                i++; // Skip the next argument since it's the output folder
-            }
-            else
-            {
-                std::cerr << "Error: No output folder specified after " << argv[i] << std::endl;
-                exit(-1);
-            }
-        }
+				mkdir(output_folder.c_str(), 0777);
+				i++; // Skip the next argument
+			} else {
+				std::cerr << "Error: No output folder specified after " << argv[i] << std::endl;
+				exit(-1);
+			}
+		}
 	}
 
-	// Then the setting file is set, and the output folder overwritten
-	for (int i = 1; i < argc; ++i)
-	{
-    if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--settings") == 0)
-        {
-            // The next argument is the settings file
-            if (i + 1 < argc)
-            {
-                settings_file = argv[i + 1];
-                XML_status = load_PhysiCell_config_file(settings_file.c_str());
+	// Second pass: check for settings file option or standalone argument
+	for (int i = 1; i < argc; ++i) {
+		if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--settings") == 0) {
+			// The next argument is the settings file
+			if (i + 1 < argc) {
+				settings_file = argv[i + 1];
+				SettingsFromCommandLine = true;
+				XML_status = load_PhysiCell_config_file(settings_file.c_str());
 
-				// The output folder that is set when the .xml config file is read must be overwritten!
+				// Only overwrite output folder if explicitly set via command line
 				if (OutputFromCommandLine) {
 					PhysiCell::PhysiCell_settings.folder = output_folder;
 				}
 				
 				sprintf(copy_command, "cp %s %s", settings_file.c_str(), PhysiCell_settings.folder.c_str());
-                i++; // Skip the next argument since it's the settings file
-            }
-            else
-            {
-                std::cerr << "Error: No settings file specified after " << argv[i] << std::endl;
-                exit(-1);
-            }
-        }
+				i++; // Skip the next argument
+			} else {
+				std::cerr << "Error: No settings file specified after " << argv[i] << std::endl;
+				exit(-1);
+			}
+		} 
+		// Handle case where argument isn't an option flag and we haven't found a settings file yet
+		else if (argv[i][0] != '-' && !SettingsFromCommandLine) {
+			settings_file = argv[i];
+			SettingsFromCommandLine = true;
+			XML_status = load_PhysiCell_config_file(settings_file.c_str());
+			
+			// Don't overwrite output folder in this case
+			sprintf(copy_command, "cp %s %s", settings_file.c_str(), PhysiCell_settings.folder.c_str());
+		}
 	}
 
     // If no settings file was specified, use the default
