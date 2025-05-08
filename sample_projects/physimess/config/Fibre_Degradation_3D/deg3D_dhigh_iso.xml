@@ -273,14 +273,14 @@
 
         </phenotype>
         <custom_data>
-          <anisotropic_fibres units="none" description="flag for whether we want anisotropic fibres">1.0</anisotropic_fibres>
-          <fibre_length units="none" description="fibre length">50.0</fibre_length>
+          <anisotropic_fibres units="none" description="flag for whether we want anisotropic fibres">0.0</anisotropic_fibres>
+          <fibre_length units="none" description="fibre length">100.0</fibre_length>
           <length_normdist_sd units="none" description="standard deviation of fibre length">0.0</length_normdist_sd>
           <fibre_radius units="none" description="fibre radius">1.0</fibre_radius>
           <radius_normdist_sd units="none" description="standard deviation of fibre length">0.0</radius_normdist_sd>
           <fibre_angle units="none" desctription="angle of fibre direction between 0 an 2*pi (used for 2D orientation setting)">0.0</fibre_angle>
           <fibre_angle_phi units="none" desctription="angle of fibre direction between 0 and pi">1.0</fibre_angle_phi>
-          <angle_normdist_sd units="none" description="standard deviation of fibre angles">0.5</angle_normdist_sd>
+          <angle_normdist_sd units="none" description="standard deviation of fibre angles">0.2</angle_normdist_sd>
         </custom_data>
       </cell_definition>
  
