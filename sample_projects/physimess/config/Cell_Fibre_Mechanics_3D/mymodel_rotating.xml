@@ -9,11 +9,11 @@
 		<dx>20</dx>
 		<dy>20</dy>
 		<dz>20</dz>
-		<use_2D>true</use_2D>
+		<use_2D>false</use_2D>
 	</domain>
 	
 	<overall>
-		<max_time units="min">200</max_time> 
+		<max_time units="min">100</max_time> 
 		<time_units>min</time_units>
 		<space_units>micron</space_units>
 	
@@ -30,7 +30,7 @@
 		<folder>output</folder>  
 
 		<full_data>
-			<interval units="min">360</interval>
+			<interval units="min">1</interval>
 			<enable>true</enable>
 		</full_data>
 		
@@ -141,10 +141,10 @@
           <motility>
             <speed>2</speed>
             <persistence_time>1</persistence_time>
-            <migration_bias>.5</migration_bias>
+            <migration_bias>1</migration_bias>
             <options>
               <enabled>true</enabled>
-              <use_2D>true</use_2D>
+              <use_2D>false</use_2D>
               <chemotaxis>
                 <enabled>true</enabled>
                 <substrate>nutrient</substrate>
@@ -248,8 +248,8 @@
             <persistence_time>0.0</persistence_time>
             <migration_bias>0.0</migration_bias>
             <options>
-              <enabled>false</enabled>
-              <use_2D>true</use_2D>
+              <enabled>true</enabled>
+              <use_2D>false</use_2D>
               <chemotaxis>
                 <enabled>false</enabled>
                 <substrate>nutrient</substrate>
@@ -347,8 +347,8 @@
             <persistence_time>0.0</persistence_time>
             <migration_bias>0.0</migration_bias>
             <options>
-              <enabled>false</enabled>
-              <use_2D>true</use_2D>
+              <enabled>true</enabled>
+              <use_2D>false</use_2D>
               <chemotaxis>
                 <enabled>false</enabled>
                 <substrate>nutrient</substrate>
@@ -377,9 +377,14 @@
 	
 	<initial_conditions>
 		<cell_positions type="csv" enabled="true">
-			<folder>./config/Cell_Fibre_Mechanics</folder>
-			<filename>snowplough.csv</filename>
+			<folder>./config/Cell_Fibre_Mechanics_3D</folder>
+			<filename>rotate.csv</filename>
 		</cell_positions>
+    <fibres_from_file>
+      <enable>true</enable>
+      <ID>1</ID>
+      <relative_fibre_volume>0.094</relative_fibre_volume>
+    </fibres_from_file>
 	</initial_conditions>	
 	
 	<user_parameters>
